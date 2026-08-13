@@ -476,8 +476,11 @@ function compressImageBase64(dataUrl, callback) {
                 if (preview) preview.innerText = "";
                 removeBtn.classList.add("hidden");
                 
+                // Immediately save active date log to persist deletion to LocalStorage & Cloud
+                saveActiveDateLog();
+                
                 const label = hr < 12 ? `${hr}:00 AM` : (hr === 12 ? "12:00 PM" : `${hr-12}:00 PM`);
-                showToast(`Lampiran jam ${label} dibuang.`);
+                showToast(`Lampiran jam ${label} dibuang & diselaraskan.`);
             });
         }
     });
@@ -1291,13 +1294,28 @@ function triggerMonthlyPrint() {
 // Helper function to execute print safely across Browsers, Mobile Devices, and Android WebViews (APK)
 function executeSystemPrint(elementId, filename) {
     const isMobileOrAPK = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    const element = elementId ? document.getElementById(elementId) : null;
 
-    if (isMobileOrAPK && typeof html2pdf !== 'undefined' && elementId) {
-        showToast("📄 Menjana fail PDF Laporan untuk telefon...", "info");
-        const element = document.getElementById(elementId);
-        
+    if (isMobileOrAPK && typeof html2pdf !== 'undefined' && element) {
+        showToast("📄 Menjana fail PDF Laporan...", "info");
+
+        // Save original styles
+        const origDisplay = element.style.display;
+        const origPos = element.style.position;
+        const origZIndex = element.style.zIndex;
+        const origBg = element.style.backgroundColor;
+
+        // Temporarily reveal element for html2canvas capture
+        element.style.display = "block";
+        element.style.position = "fixed";
+        element.style.top = "0";
+        element.style.left = "0";
+        element.style.width = "100%";
+        element.style.zIndex = "99999";
+        element.style.backgroundColor = "#ffffff";
+
         const opt = {
-            margin:       [8, 8, 8, 8],
+            margin:       [5, 5, 5, 5],
             filename:     (filename || 'Laporan_BDR') + '.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2, useCORS: true, logging: false },
@@ -1305,9 +1323,17 @@ function executeSystemPrint(elementId, filename) {
         };
 
         html2pdf().set(opt).from(element).save().then(() => {
-            showToast("✅ Fail PDF berjaya dimuat turun!");
+            element.style.display = origDisplay;
+            element.style.position = origPos;
+            element.style.zIndex = origZIndex;
+            element.style.backgroundColor = origBg;
+            showToast("✅ Fail PDF Laporan berjaya dimuat turun!");
         }).catch(err => {
             console.error("html2pdf error:", err);
+            element.style.display = origDisplay;
+            element.style.position = origPos;
+            element.style.zIndex = origZIndex;
+            element.style.backgroundColor = origBg;
             window.print();
         });
     } else {
