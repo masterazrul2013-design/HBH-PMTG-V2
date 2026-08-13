@@ -384,7 +384,7 @@ function setupEventListeners() {
     });
 
     // Hourly Attachment Listeners
-    const hoursList = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+    const hoursList = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
     hoursList.forEach(hr => {
         const itemRow = document.querySelector(`.timeline-item[data-hour="${hr}"]`);
         if (!itemRow) return;
@@ -672,8 +672,8 @@ function loadActiveDateLog() {
     // Initialize temporary hourly attachments
     state.tempHourAttachments = {};
     
-    // Setup inputs for hours 8 to 16
-    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+    // Setup inputs for hours 8 to 17 (8:00 AM - 6:00 PM)
+    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
     
     hours.forEach(hr => {
         const itemRow = document.querySelector(`.timeline-item[data-hour="${hr}"]`);
@@ -823,7 +823,7 @@ function renderTimetableWidget(dayOfWeek) {
     }
 
     let html = '<div class="class-widget-list">';
-    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
     
     hours.forEach(hr => {
         if (timetableDay[hr]) {
@@ -853,7 +853,7 @@ function formatHourRange(hr) {
 
 // Save Log Harian
 function saveActiveDateLog() {
-    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
     const dailyData = {};
 
     hours.forEach(hr => {
@@ -899,8 +899,8 @@ function updateDashboardStats() {
     const logKeys = Object.keys(state.logs);
     totalDaysCount.innerText = logKeys.length;
     
-    // Total hours: each logged day represents 9 hours (8:00 AM - 5:00 PM)
-    totalHoursCount.innerText = logKeys.length * 9;
+    // Total hours: each logged day represents 10 hours (8:00 AM - 6:00 PM)
+    totalHoursCount.innerText = logKeys.length * 10;
 }
 
 // Populate and Update History Table
@@ -1026,7 +1026,7 @@ function triggerDailyPrint() {
     const tableBody = document.getElementById("print-daily-activities-body");
     tableBody.innerHTML = "";
 
-    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
     hours.forEach((hr, index) => {
         const timeRangeStr = formatHourRange(hr);
         const taskName = savedLog[hr] ? savedLog[hr].task : "";
@@ -1158,7 +1158,7 @@ function triggerMonthlyPrint() {
             <td style="text-align: center;">${index + 1}</td>
             <td style="text-align: center;"><strong>${dateStrFormatted}</strong></td>
             <td style="text-align: center;">${DAY_NAMES[dayOfWeek]}</td>
-            <td style="text-align: center;">9 Jam</td>
+            <td style="text-align: center;">${Object.keys(dailyLog).length} Jam</td>
             <td>${summaryText}</td>
         `;
         summaryTableBody.appendChild(trSummary);
@@ -1169,7 +1169,7 @@ function triggerMonthlyPrint() {
         dailySheetDiv.style.marginTop = "30px";
         
         let activitiesRows = "";
-        const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+        const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
         hours.forEach((hr, hrIndex) => {
             const timeRangeStr = formatHourRange(hr);
             const taskName = dailyLog[hr] ? dailyLog[hr].task : "";
@@ -1215,22 +1215,16 @@ function triggerMonthlyPrint() {
 
             <table class="info-table">
                 <tr>
-                    <td class="info-label">Nama Pegawai</td>
-                    <td class="info-val">${state.profile.name.toUpperCase()}</td>
-                    <td class="info-label">Hari BDR</td>
-                    <td class="info-val">${DAY_NAMES[dayOfWeek]}</td>
+                    <td class="info-label">NAMA PEGAWAI</td>
+                    <td class="info-val">: ${state.profile.name.toUpperCase()}</td>
+                    <td class="info-label">HARI / TARIKH</td>
+                    <td class="info-val">: ${DAY_NAMES[dayOfWeek].toUpperCase()} (${dateStrFormatted})</td>
                 </tr>
                 <tr>
-                    <td class="info-label">Jawatan / Gred</td>
-                    <td class="info-val">${state.profile.designation}</td>
-                    <td class="info-label">Tarikh BDR</td>
-                    <td class="info-val">${dateStrFormatted}</td>
-                </tr>
-                <tr>
-                    <td class="info-label">Bahagian/Jabatan</td>
-                    <td class="info-val">${state.profile.department}</td>
-                    <td class="info-label">Waktu Bekerja</td>
-                    <td class="info-val">8:00 AM - 5:00 PM (9 Jam)</td>
+                    <td class="info-label">JAWATAN / GRED</td>
+                    <td class="info-val">: ${state.profile.designation}</td>
+                    <td class="info-label">WAKTU BEKERJA BDR</td>
+                    <td class="info-val">: 8:00 AM - 6:00 PM (10 Jam)</td>
                 </tr>
             </table>
 
@@ -1460,7 +1454,7 @@ function renderManualGridInputs() {
     const gridKhamis = document.getElementById("manual-grid-khamis");
     if (!gridSelasa || !gridKhamis) return;
 
-    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
     
     // Tuesday (Day 2)
     let selasaHtml = "";
@@ -1527,7 +1521,7 @@ function saveManualTimetable() {
 // Synchronize all saved logs with the active timetable
 function syncLogsWithActiveTimetable() {
     const isLecturer = state.profile.isLecturer;
-    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
 
     for (let dateKey in state.logs) {
         const logDate = new Date(dateKey);

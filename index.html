@@ -477,6 +477,41 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Hour Block: 05:00 - 06:00 -->
+                                <div class="timeline-item" data-hour="17">
+                                    <div class="timeline-time">
+                                        <h4>05:00 PM</h4>
+                                        <span>06:00 PM</span>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="row" style="align-items: center;">
+                                            <div class="col-md-3">
+                                                <select class="form-control task-dropdown" data-hour="17">
+                                                    <option value="Urusan Kerja ICT">Urusan Kerja ICT</option>
+                                                    <option value="Urusan Penyediaan PdP">Urusan Penyediaan PdP</option>
+                                                    <option value="Pembangunan Inovasi">Pembangunan Inovasi</option>
+                                                    <option value="Pelaksanaan Kelas">Pelaksanaan Kelas</option>
+                                                    <option value="Lain-lain">Lain-lain</option>
+                                                </select>
+                                                <input type="text" class="form-control custom-task-input hidden" data-hour="17" placeholder="Nyatakan aktiviti..." style="margin-top: 0.5rem;">
+                                            </div>
+                                            <div class="col-md-7">
+                                                <textarea class="form-control task-desc" data-hour="17" placeholder="Masukkan catatan aktiviti untuk jam ini..."></textarea>
+                                            </div>
+                                            <div class="col-md-2" style="display: flex; flex-direction: column; gap: 0.25rem; justify-content: center; align-items: flex-end;">
+                                                <div style="display: flex; gap: 0.25rem; align-items: center; width: 100%;">
+                                                    <label class="btn btn-secondary btn-sm" style="margin: 0; padding: 0.4rem 0.6rem; font-size: 0.75rem; flex: 1; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.25rem; font-weight: 500; border-color: var(--border-color); width: 100%;">
+                                                        <i class="fa-solid fa-camera"></i> Bukti
+                                                        <input type="file" class="hour-attachment-input" data-hour="17" accept="image/*,video/*" style="display: none;">
+                                                    </label>
+                                                    <button type="button" class="btn btn-secondary btn-sm remove-hour-attachment-btn hidden" data-hour="17" style="padding: 0.4rem 0.6rem; font-size: 0.75rem; border-color: #ef4444; color: #ef4444;" title="Padam lampiran"><i class="fa-solid fa-trash"></i></button>
+                                                </div>
+                                                <div class="hour-attachment-preview" data-hour="17" style="font-size: 0.65rem; color: var(--text-secondary); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -734,7 +769,7 @@
                 <td class="info-label">Bahagian/Jabatan</td>
                 <td class="info-val" id="print-daily-dept">Jabatan Teknologi Maklumat & Komunikasi</td>
                 <td class="info-label">Waktu Bekerja</td>
-                <td class="info-val">8:00 AM - 5:00 PM (9 Jam)</td>
+                <td class="info-val">8:00 AM - 6:00 PM (10 Jam)</td>
             </tr>
         </table>
 
