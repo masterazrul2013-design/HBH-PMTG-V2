@@ -1991,5 +1991,33 @@ drawerMenuItems.forEach(item => {
     });
 });
 
+// Function to hide APK Download buttons when running inside Mobile / APK WebView
+function hideApkButtonsOnMobile() {
+    const isMobileOrAPK = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth <= 768 || window.location.protocol === "file:";
+    if (isMobileOrAPK) {
+        document.querySelectorAll('.apk-download-btn, .apk-download-card').forEach(el => {
+            el.style.display = 'none';
+            el.style.setProperty('display', 'none', 'important');
+        });
+    }
+}
+
+// Run immediately and on DOMContentLoaded / resize
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", hideApkButtonsOnMobile);
+} else {
+    hideApkButtonsOnMobile();
+}
+window.addEventListener("resize", hideApkButtonsOnMobile);
+
+// Force update Service Worker caches so new code is fetched from GitHub Pages
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let registration of registrations) {
+            registration.update();
+        }
+    });
+}
+
 
 
