@@ -393,6 +393,44 @@ function setupEventListeners() {
         const removeBtn = itemRow.querySelector(".remove-hour-attachment-btn");
         const preview = itemRow.querySelector(".hour-attachment-preview");
 
+// Helper function to compress evidence images before storing/cloud syncing
+function compressImageBase64(dataUrl, callback) {
+    if (!dataUrl || !dataUrl.startsWith("data:image")) {
+        return callback(dataUrl);
+    }
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 600;
+
+        if (width > height) {
+            if (width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+            }
+        } else {
+            if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+            }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.6);
+        callback(compressedDataUrl);
+    };
+    img.onerror = () => {
+        callback(dataUrl);
+    };
+    img.src = dataUrl;
+}
+
         if (fileInput) {
             fileInput.addEventListener("change", (e) => {
                 const file = e.target.files[0];
@@ -407,19 +445,22 @@ function setupEventListeners() {
 
                 const reader = new FileReader();
                 reader.onload = (evt) => {
-                    state.tempHourAttachments[hr] = {
-                        name: file.name,
-                        type: file.type,
-                        data: evt.target.result
-                    };
-                    if (preview) {
-                        preview.innerText = file.name;
-                        preview.title = file.name;
-                    }
-                    if (removeBtn) removeBtn.classList.remove("hidden");
-                    
-                    const label = hr < 12 ? `${hr}:00 AM` : (hr === 12 ? "12:00 PM" : `${hr-12}:00 PM`);
-                    showToast(`Lampiran jam ${label} berjaya dimuat naik!`);
+                    const rawDataUrl = evt.target.result;
+                    compressImageBase64(rawDataUrl, (compressedDataUrl) => {
+                        state.tempHourAttachments[hr] = {
+                            name: file.name,
+                            type: file.type.startsWith("image") ? "image/jpeg" : file.type,
+                            data: compressedDataUrl
+                        };
+                        if (preview) {
+                            preview.innerText = file.name;
+                            preview.title = file.name;
+                        }
+                        if (removeBtn) removeBtn.classList.remove("hidden");
+                        
+                        const label = hr < 12 ? `${hr}:00 AM` : (hr === 12 ? "12:00 PM" : `${hr-12}:00 PM`);
+                        showToast(`Lampiran jam ${label} berjaya dimuat naik!`);
+                    });
                 };
                 reader.readAsDataURL(file);
             });
@@ -1610,6 +1651,35 @@ if (auth) {
     });
 }
 
+// Function to clear local state when logging out or switching accounts
+function clearLocalState() {
+    state.logs = {};
+    state.signature = "";
+    state.profile = {
+        name: "NAMA PEGAWAI",
+        designation: "Jawatan / Gred",
+        department: "Jabatan",
+        institution: "Politeknik METrO Tasek Gelugor",
+        hodName: "Ketua Jabatan",
+        hodDesignation: "Ketua Jabatan",
+        isLecturer: true
+    };
+    state.timetable = JSON.parse(JSON.stringify(TIMETABLE));
+
+    localStorage.removeItem("bdr_logs");
+    localStorage.removeItem("bdr_profile");
+    localStorage.removeItem("bdr_timetable");
+    localStorage.removeItem("bdr_signature");
+
+    loadLocalStorageData();
+    if (logDateInput && logDateInput.value) {
+        state.activeDate = logDateInput.value;
+        loadActiveDateLog();
+    }
+    updateDashboardStats();
+    updateHistoryTable();
+}
+
 // Function to save user state to Firestore Cloud
 async function saveUserDataToCloud(silent = false) {
     if (!auth || !currentUser || !db) return;
@@ -1651,10 +1721,19 @@ async function fetchUserDataFromCloud(uid) {
         const docSnap = await db.collection("users").doc(uid).get();
         if (docSnap.exists) {
             const data = docSnap.data();
-            if (data.logs && Object.keys(data.logs).length > 0) state.logs = data.logs;
-            if (data.profile) state.profile = data.profile;
-            if (data.timetable) state.timetable = data.timetable;
-            if (data.signature) state.signature = data.signature;
+            // Replace local state cleanly with fetched cloud user data
+            state.logs = data.logs || {};
+            state.profile = data.profile || {
+                name: "NAMA PEGAWAI",
+                designation: "Jawatan / Gred",
+                department: "Jabatan",
+                institution: "Politeknik METrO Tasek Gelugor",
+                hodName: "Ketua Jabatan",
+                hodDesignation: "Ketua Jabatan",
+                isLecturer: true
+            };
+            state.timetable = data.timetable || JSON.parse(JSON.stringify(TIMETABLE));
+            state.signature = data.signature || "";
 
             // Sync to localstorage for offline fallback
             localStorage.setItem("bdr_logs", JSON.stringify(state.logs));
@@ -1669,10 +1748,12 @@ async function fetchUserDataFromCloud(uid) {
             }
             updateDashboardStats();
             updateHistoryTable();
-            showToast("☁️ Data berjaya diselaras dari Awan!");
+            showToast("☁️ Data akaun berjaya diselaras dari Awan!");
         } else {
-            console.log("No cloud doc found, saving local state to cloud.");
+            console.log("No cloud doc found for new user, initializing fresh empty state.");
+            clearLocalState();
             saveUserDataToCloud(true);
+            showToast("☁️ Akaun baharu dimulakan!");
         }
     } catch (err) {
         console.error("Cloud fetch error:", err);
@@ -1720,7 +1801,8 @@ if (doLogoutBtn) {
     doLogoutBtn.addEventListener("click", async () => {
         if (auth) {
             await auth.signOut();
-            showToast("Log keluar dari Awan.");
+            clearLocalState();
+            showToast("Log keluar dari Awan & data dibersihkan.");
             closeCloudModal();
         }
     });
