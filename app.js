@@ -1680,17 +1680,80 @@ function clearLocalState() {
     updateHistoryTable();
 }
 
+// Helper to compress all evidence image attachments in state.logs before Cloud save
+async function compressLogsAttachments(logs) {
+    if (!logs) return {};
+    const clonedLogs = JSON.parse(JSON.stringify(logs));
+    
+    const compressPromise = (dataUrl) => {
+        return new Promise((resolve) => {
+            if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith("data:image")) {
+                return resolve(dataUrl);
+            }
+            // If already compressed (< 60KB Base64), keep as-is
+            if (dataUrl.length < 60000) {
+                return resolve(dataUrl);
+            }
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 500;
+
+                if (width > height) {
+                    if (width > maxDim) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    }
+                } else {
+                    if (height > maxDim) {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+
+                resolve(canvas.toDataURL("image/jpeg", 0.5));
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    };
+
+    for (const dateKey of Object.keys(clonedLogs)) {
+        const dayLog = clonedLogs[dateKey];
+        if (dayLog && typeof dayLog === 'object') {
+            for (const hrKey of Object.keys(dayLog)) {
+                const item = dayLog[hrKey];
+                if (item && item.attachment && item.attachment.data) {
+                    item.attachment.data = await compressPromise(item.attachment.data);
+                }
+            }
+        }
+    }
+    return clonedLogs;
+}
+
 // Function to save user state to Firestore Cloud
 async function saveUserDataToCloud(silent = false) {
     if (!auth || !currentUser || !db) return;
     try {
         const userDocRef = db.collection("users").doc(currentUser.uid);
         
-        // Clean data to prevent Firestore undefined properties crash
+        // Auto-compress all attachments (including legacy uncompressed logs) before sending to Cloud
+        const cleanLogs = await compressLogsAttachments(state.logs);
         const cleanProfile = JSON.parse(JSON.stringify(state.profile || {}));
-        const cleanLogs = JSON.parse(JSON.stringify(state.logs || {}));
         const cleanTimetable = JSON.parse(JSON.stringify(state.timetable || {}));
         const cleanSignature = state.signature || "";
+
+        // Update local state with compressed logs to save disk space
+        state.logs = cleanLogs;
+        localStorage.setItem("bdr_logs", JSON.stringify(state.logs));
 
         await userDocRef.set({
             email: currentUser.email,
@@ -1702,15 +1765,11 @@ async function saveUserDataToCloud(silent = false) {
         }, { merge: true });
 
         console.log("Cloud save success for:", currentUser.email);
-        if (!silent) showToast("☁️ Data berjaya disimpan ke Awan!");
+        if (!silent) showToast("☁️ Data & bukti berjaya disimpan ke Awan!");
     } catch (err) {
         console.error("Cloud save error:", err);
-        if (err.message.includes("permission")) {
-            alert("⚠️ Firestore Security Rules belum diaktifkan! Sila tetapkan Rules kepada 'allow read, write: if request.auth != null;'\n\n" + err.message);
-        } else {
-            showToast("⚠️ Ralat Simpan Awan: " + err.message);
-            if (!silent) alert("Ralat menyimpan ke Awan: " + err.message);
-        }
+        showToast("⚠️ Ralat Simpan Awan: " + err.message);
+        if (!silent) alert("Ralat menyimpan ke Awan: " + err.message);
     }
 }
 
