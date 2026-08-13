@@ -1139,50 +1139,117 @@ textarea.form-control {
 }
 
 /* ==========================================
-   MOBILE RESPONSIVE LAYOUT ENHANCEMENTS
+   MOBILE DRAWER & SIDE PANEL ENHANCEMENTS
    ========================================== */
+.mobile-drawer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-drawer-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.close-drawer-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--sidebar-text);
+    font-size: 1.8rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 0.5rem;
+}
+
+.hamburger-btn {
+    display: none;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.hamburger-btn:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
 @media screen and (max-width: 768px) {
-    .app-container {
-        flex-direction: column !important;
+    .hamburger-btn {
+        display: flex !important;
     }
     
-    .sidebar {
-        width: 100% !important;
-        border-right: none !important;
-        border-bottom: 1px solid var(--border-color) !important;
-        padding: 1rem !important;
+    .close-drawer-btn {
+        display: block !important;
     }
     
     .sidebar-header {
-        padding-bottom: 0.75rem !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
     }
     
+    /* Convert Sidebar into a smooth slide-out Side Panel Drawer */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: -310px !important;
+        width: 290px !important;
+        height: 100vh !important;
+        z-index: 1001 !important;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 6px 0 25px rgba(0,0,0,0.4) !important;
+        overflow-y: auto !important;
+        padding: 1.5rem 1.25rem !important;
+    }
+    
+    .sidebar.drawer-open {
+        left: 0 !important;
+    }
+
+    .profile-card {
+        display: flex !important;
+        margin-top: auto !important;
+    }
+
     .sidebar-menu {
-        margin-top: 0.75rem !important;
-        flex-direction: row !important;
-        overflow-x: auto !important;
-        padding-bottom: 0.5rem !important;
-        gap: 0.35rem !important;
-        -webkit-overflow-scrolling: touch;
+        flex-direction: column !important;
+        margin-top: 1.5rem !important;
+        overflow-x: visible !important;
+        gap: 0.5rem !important;
     }
     
     .menu-item {
-        white-space: nowrap !important;
-        padding: 0.5rem 0.75rem !important;
-        font-size: 0.82rem !important;
-        border-left: none !important;
-        border-bottom: 3px solid transparent !important;
+        white-space: normal !important;
+        font-size: 0.9rem !important;
+        padding: 0.85rem 1rem !important;
+        border-left: 4px solid transparent !important;
+        border-bottom: none !important;
     }
     
     .menu-item.active {
-        border-left: none !important;
-        border-bottom: 3px solid var(--primary-color) !important;
+        border-left: 4px solid var(--primary-color) !important;
+        border-bottom: none !important;
     }
-    
-    .profile-card {
-        display: none !important;
-    }
-    
+
     .main-content {
         padding: 1rem 0.75rem !important;
         width: 100% !important;
@@ -1209,7 +1276,41 @@ textarea.form-control {
     .page-title h1 {
         font-size: 1.35rem !important;
     }
-    
+
+    /* FIX CARD HEADERS & CUT OFF BUTTONS ON MOBILE */
+    .card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+
+    .card-header h3 {
+        font-size: 1.05rem !important;
+        line-height: 1.4 !important;
+        word-break: break-word !important;
+        width: 100% !important;
+    }
+
+    .card-header-actions {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+
+    .card-header-actions .btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 0.65rem 1rem !important;
+        font-size: 0.85rem !important;
+    }
+
+    .row.items-center.mb-4 {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+
     .dashboard-grid {
         grid-template-columns: 1fr !important;
     }
@@ -1250,4 +1351,5 @@ textarea.form-control {
         padding: 1.25rem !important;
     }
 }
+
 

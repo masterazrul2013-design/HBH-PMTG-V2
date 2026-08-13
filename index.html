@@ -20,8 +20,11 @@
 <body>
     <!-- Screen View (Hidden during printing) -->
     <div class="app-container no-print">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
+        <!-- Mobile Drawer Overlay Backdrop -->
+        <div id="mobile-drawer-overlay" class="mobile-drawer-overlay"></div>
+
+        <!-- Sidebar Navigation (Desktop Sidebar & Mobile Side Panel Drawer) -->
+        <aside class="sidebar" id="app-sidebar">
             <div class="sidebar-header">
                 <div class="logo-area">
                     <div class="logo-icon"><i class="fa-solid fa-house-laptop"></i></div>
@@ -30,6 +33,7 @@
                         <span class="sub-text">Sistem Log Harian</span>
                     </div>
                 </div>
+                <button type="button" id="close-drawer-btn" class="close-drawer-btn" title="Tutup Menu">&times;</button>
             </div>
             
             <nav class="sidebar-menu">
@@ -37,6 +41,7 @@
                 <a href="#" class="menu-item" data-tab="history"><i class="fa-solid fa-clock-rotate-left"></i> Rekod & Cetakan</a>
                 <a href="#" class="menu-item" data-tab="settings"><i class="fa-solid fa-gears"></i> Tetapan & T/Tangan</a>
                 <a href="manual.html" target="_blank" class="menu-item"><i class="fa-solid fa-book"></i> Manual Pengguna</a>
+                <a href="hbh-pmtg-v2.apk" download="HBH_PMTG_v2.apk" class="menu-item" style="background: rgba(15,118,110,0.15); color: var(--primary-hover); margin-top: 0.5rem;"><i class="fa-solid fa-mobile-screen-button"></i> Muat Turun APK Android</a>
             </nav>
 
             <div class="profile-card">
@@ -52,9 +57,12 @@
         <main class="main-content">
             <!-- Top Navbar -->
             <header class="navbar">
-                <div class="page-title">
-                    <h1 id="current-tab-title">Dashboard Utama</h1>
-                    <p class="breadcrumbs">HBH PMTG &gt; <span id="breadcrumb-current">Dashboard</span></p>
+                <div class="navbar-left" style="display: flex; align-items: center; gap: 0.75rem;">
+                    <button type="button" id="open-drawer-btn" class="hamburger-btn" title="Buka Menu Panel"><i class="fa-solid fa-bars"></i></button>
+                    <div class="page-title">
+                        <h1 id="current-tab-title">Dashboard Utama</h1>
+                        <p class="breadcrumbs">HBH PMTG &gt; <span id="breadcrumb-current">Dashboard</span></p>
+                    </div>
                 </div>
                 <div class="nav-actions">
                     <a href="hbh-pmtg-v2.apk" download="HBH_PMTG_v2.apk" class="btn btn-primary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 20px; text-decoration: none;" title="Muat Turun APK Android">

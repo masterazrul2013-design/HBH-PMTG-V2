@@ -1742,4 +1742,35 @@ if (saveNowBtn) {
     });
 }
 
+// --- Mobile Side Panel Drawer Controls ---
+const openDrawerBtn = document.getElementById("open-drawer-btn");
+const closeDrawerBtn = document.getElementById("close-drawer-btn");
+const mobileDrawerOverlay = document.getElementById("mobile-drawer-overlay");
+const appSidebar = document.getElementById("app-sidebar");
+
+function openMobileDrawer() {
+    if (appSidebar) appSidebar.classList.add("drawer-open");
+    if (mobileDrawerOverlay) mobileDrawerOverlay.classList.add("active");
+}
+
+function closeMobileDrawer() {
+    if (appSidebar) appSidebar.classList.remove("drawer-open");
+    if (mobileDrawerOverlay) mobileDrawerOverlay.classList.remove("active");
+}
+
+if (openDrawerBtn) openDrawerBtn.addEventListener("click", openMobileDrawer);
+if (closeDrawerBtn) closeDrawerBtn.addEventListener("click", closeMobileDrawer);
+if (mobileDrawerOverlay) mobileDrawerOverlay.addEventListener("click", closeMobileDrawer);
+
+// Close drawer when menu items are clicked on mobile
+const drawerMenuItems = document.querySelectorAll(".menu-item");
+drawerMenuItems.forEach(item => {
+    item.addEventListener("click", () => {
+        if (window.innerWidth <= 768) {
+            closeMobileDrawer();
+        }
+    });
+});
+
+
 
