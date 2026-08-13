@@ -1068,7 +1068,7 @@ function triggerDailyPrint() {
     document.body.classList.remove("print-mode-monthly");
 
     if (typeof executeSystemPrint === 'function') {
-        executeSystemPrint();
+        executeSystemPrint("print-daily-report", "Laporan_Harian_BDR_" + state.activeDate);
     } else {
         window.print();
     }
@@ -1277,7 +1277,7 @@ function triggerMonthlyPrint() {
     document.body.classList.remove("print-mode-daily");
 
     if (typeof executeSystemPrint === 'function') {
-        executeSystemPrint();
+        executeSystemPrint("print-monthly-report", "Laporan_Bulanan_BDR_" + filterMonth);
     } else {
         window.print();
     }
@@ -1288,17 +1288,39 @@ function triggerMonthlyPrint() {
     }, 1000);
 }
 
-// Helper function to execute print safely across Browsers and Android WebViews
-function executeSystemPrint() {
-    try {
-        if (window.AndroidPrint && typeof window.AndroidPrint.printPage === 'function') {
-            window.AndroidPrint.printPage();
-        } else {
+// Helper function to execute print safely across Browsers, Mobile Devices, and Android WebViews (APK)
+function executeSystemPrint(elementId, filename) {
+    const isMobileOrAPK = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth <= 768;
+
+    if (isMobileOrAPK && typeof html2pdf !== 'undefined' && elementId) {
+        showToast("📄 Menjana fail PDF Laporan untuk telefon...", "info");
+        const element = document.getElementById(elementId);
+        
+        const opt = {
+            margin:       [8, 8, 8, 8],
+            filename:     (filename || 'Laporan_BDR') + '.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            showToast("✅ Fail PDF berjaya dimuat turun!");
+        }).catch(err => {
+            console.error("html2pdf error:", err);
+            window.print();
+        });
+    } else {
+        try {
+            if (window.AndroidPrint && typeof window.AndroidPrint.printPage === 'function') {
+                window.AndroidPrint.printPage();
+            } else {
+                window.print();
+            }
+        } catch (err) {
+            console.error("Print execution error:", err);
             window.print();
         }
-    } catch (err) {
-        console.error("Print execution error:", err);
-        window.print();
     }
 }
 
@@ -1806,7 +1828,8 @@ async function saveUserDataToCloud(silent = false) {
 async function fetchUserDataFromCloud(uid) {
     if (!db) return;
     try {
-        const docSnap = await db.collection("users").doc(uid).get();
+        // Fetch latest server document bypassing local cache
+        const docSnap = await db.collection("users").doc(uid).get({ source: "server" }).catch(() => db.collection("users").doc(uid).get());
         if (docSnap.exists) {
             const data = docSnap.data();
             // Replace local state cleanly with fetched cloud user data
