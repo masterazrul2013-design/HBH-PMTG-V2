@@ -469,7 +469,10 @@ function compressImageBase64(dataUrl, callback) {
         if (removeBtn) {
             removeBtn.addEventListener("click", () => {
                 if (fileInput) fileInput.value = "";
-                delete state.tempHourAttachments[hr];
+                state.tempHourAttachments[hr] = null; // Mark explicitly as removed
+                if (state.logs[state.activeDate] && state.logs[state.activeDate][hr]) {
+                    delete state.logs[state.activeDate][hr].attachment;
+                }
                 if (preview) preview.innerText = "";
                 removeBtn.classList.add("hidden");
                 
@@ -867,8 +870,12 @@ function saveActiveDateLog() {
             desc: textarea.value.trim()
         };
 
-        if (state.tempHourAttachments[hr]) {
-            dailyData[hr].attachment = state.tempHourAttachments[hr];
+        if (state.tempHourAttachments[hr] !== undefined) {
+            if (state.tempHourAttachments[hr] !== null) {
+                dailyData[hr].attachment = state.tempHourAttachments[hr];
+            }
+        } else if (state.logs[state.activeDate] && state.logs[state.activeDate][hr] && state.logs[state.activeDate][hr].attachment) {
+            dailyData[hr].attachment = state.logs[state.activeDate][hr].attachment;
         }
     });
 
@@ -1060,7 +1067,11 @@ function triggerDailyPrint() {
     document.body.classList.add("print-mode-daily");
     document.body.classList.remove("print-mode-monthly");
 
-    window.print();
+    if (typeof executeSystemPrint === 'function') {
+        executeSystemPrint();
+    } else {
+        window.print();
+    }
 
     // Clean up after print window closes
     setTimeout(() => {
@@ -1265,12 +1276,30 @@ function triggerMonthlyPrint() {
     document.body.classList.add("print-mode-monthly");
     document.body.classList.remove("print-mode-daily");
 
-    window.print();
+    if (typeof executeSystemPrint === 'function') {
+        executeSystemPrint();
+    } else {
+        window.print();
+    }
 
     // Clean up after print window closes
     setTimeout(() => {
         document.body.classList.remove("print-mode-monthly");
     }, 1000);
+}
+
+// Helper function to execute print safely across Browsers and Android WebViews
+function executeSystemPrint() {
+    try {
+        if (window.AndroidPrint && typeof window.AndroidPrint.printPage === 'function') {
+            window.AndroidPrint.printPage();
+        } else {
+            window.print();
+        }
+    } catch (err) {
+        console.error("Print execution error:", err);
+        window.print();
+    }
 }
 
 // JSON Export functionality
@@ -1762,7 +1791,7 @@ async function saveUserDataToCloud(silent = false) {
             timetable: cleanTimetable,
             signature: cleanSignature,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+        });
 
         console.log("Cloud save success for:", currentUser.email);
         if (!silent) showToast("☁️ Data & bukti berjaya disimpan ke Awan!");
