@@ -1502,9 +1502,11 @@ if (importJsonBtn && importJsonFile) {
 
                 loadLocalStorageData();
                 if (logDateInput && logDateInput.value) {
-                    renderLogFormForDate(logDateInput.value);
+                    state.activeDate = logDateInput.value;
+                    loadActiveDateLog();
                 }
                 updateDashboardStats();
+                updateHistoryTable();
                 showToast("Data backup berjaya dimasukkan!");
             } catch (err) {
                 alert("Ralat: Fail backup tidak sah!");
@@ -1613,19 +1615,32 @@ async function saveUserDataToCloud(silent = false) {
     if (!auth || !currentUser || !db) return;
     try {
         const userDocRef = db.collection("users").doc(currentUser.uid);
+        
+        // Clean data to prevent Firestore undefined properties crash
+        const cleanProfile = JSON.parse(JSON.stringify(state.profile || {}));
+        const cleanLogs = JSON.parse(JSON.stringify(state.logs || {}));
+        const cleanTimetable = JSON.parse(JSON.stringify(state.timetable || {}));
+        const cleanSignature = state.signature || "";
+
         await userDocRef.set({
             email: currentUser.email,
-            profile: state.profile,
-            logs: state.logs,
-            timetable: state.timetable,
-            signature: state.signature,
+            profile: cleanProfile,
+            logs: cleanLogs,
+            timetable: cleanTimetable,
+            signature: cleanSignature,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
+        console.log("Cloud save success for:", currentUser.email);
         if (!silent) showToast("☁️ Data berjaya disimpan ke Awan!");
     } catch (err) {
         console.error("Cloud save error:", err);
-        if (!silent) alert("Ralat menyimpan ke Awan: " + err.message);
+        if (err.message.includes("permission")) {
+            alert("⚠️ Firestore Security Rules belum diaktifkan! Sila tetapkan Rules kepada 'allow read, write: if request.auth != null;'\n\n" + err.message);
+        } else {
+            showToast("⚠️ Ralat Simpan Awan: " + err.message);
+            if (!silent) alert("Ralat menyimpan ke Awan: " + err.message);
+        }
     }
 }
 
@@ -1636,7 +1651,7 @@ async function fetchUserDataFromCloud(uid) {
         const docSnap = await db.collection("users").doc(uid).get();
         if (docSnap.exists) {
             const data = docSnap.data();
-            if (data.logs) state.logs = data.logs;
+            if (data.logs && Object.keys(data.logs).length > 0) state.logs = data.logs;
             if (data.profile) state.profile = data.profile;
             if (data.timetable) state.timetable = data.timetable;
             if (data.signature) state.signature = data.signature;
@@ -1649,16 +1664,23 @@ async function fetchUserDataFromCloud(uid) {
 
             loadLocalStorageData();
             if (logDateInput && logDateInput.value) {
-                renderLogFormForDate(logDateInput.value);
+                state.activeDate = logDateInput.value;
+                loadActiveDateLog();
             }
             updateDashboardStats();
+            updateHistoryTable();
             showToast("☁️ Data berjaya diselaras dari Awan!");
         } else {
-            // First time user, save current local state to Cloud
+            console.log("No cloud doc found, saving local state to cloud.");
             saveUserDataToCloud(true);
         }
     } catch (err) {
         console.error("Cloud fetch error:", err);
+        if (err.message.includes("permission")) {
+            alert("⚠️ Firestore Security Rules belum diaktifkan! Sila tetapkan Rules kepada 'allow read, write: if request.auth != null;'\n\n" + err.message);
+        } else {
+            showToast("⚠️ Ralat Muat Data Awan: " + err.message);
+        }
     }
 }
 
