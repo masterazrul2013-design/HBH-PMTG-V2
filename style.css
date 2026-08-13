@@ -1137,3 +1137,117 @@ textarea.form-control {
         page-break-before: always;
     }
 }
+
+/* ==========================================
+   MOBILE RESPONSIVE LAYOUT ENHANCEMENTS
+   ========================================== */
+@media screen and (max-width: 768px) {
+    .app-container {
+        flex-direction: column !important;
+    }
+    
+    .sidebar {
+        width: 100% !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        padding: 1rem !important;
+    }
+    
+    .sidebar-header {
+        padding-bottom: 0.75rem !important;
+    }
+    
+    .sidebar-menu {
+        margin-top: 0.75rem !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        padding-bottom: 0.5rem !important;
+        gap: 0.35rem !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .menu-item {
+        white-space: nowrap !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.82rem !important;
+        border-left: none !important;
+        border-bottom: 3px solid transparent !important;
+    }
+    
+    .menu-item.active {
+        border-left: none !important;
+        border-bottom: 3px solid var(--primary-color) !important;
+    }
+    
+    .profile-card {
+        display: none !important;
+    }
+    
+    .main-content {
+        padding: 1rem 0.75rem !important;
+        width: 100% !important;
+    }
+    
+    .navbar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .nav-actions {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        justify-content: flex-start !important;
+    }
+    
+    .nav-actions .btn, .nav-actions .btn-icon {
+        font-size: 0.78rem !important;
+    }
+    
+    .page-title h1 {
+        font-size: 1.35rem !important;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .timeline-container {
+        padding-left: 0 !important;
+    }
+    
+    .timeline-container::before {
+        display: none !important;
+    }
+    
+    .timeline-item {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 0.85rem !important;
+    }
+    
+    .timeline-time {
+        position: relative !important;
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+        transform: none !important;
+        top: 0 !important;
+    }
+    
+    .timeline-content {
+        width: 100% !important;
+    }
+    
+    .timeline-item::before {
+        display: none !important;
+    }
+
+    .modal-content {
+        width: 92% !important;
+        margin: 1rem auto !important;
+        padding: 1.25rem !important;
+    }
+}
+
