@@ -1193,6 +1193,10 @@ textarea.form-control {
 }
 
 @media screen and (max-width: 768px) {
+    .apk-download-btn, .apk-download-card {
+        display: none !important;
+    }
+
     .hamburger-btn {
         display: flex !important;
     }
