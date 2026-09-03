@@ -190,7 +190,7 @@ function setupDateInputs() {
         printDailyDateSelect.value = todayStr;
     }
     
-    filterMonthInput.value = `${yyyy}-${mm}`;
+    selectBestDefaultMonth();
 }
 
 // Setup Event Listeners
@@ -903,22 +903,132 @@ function updateDashboardStats() {
     totalHoursCount.innerText = logKeys.length * 10;
 }
 
-// Populate and Update History Table
-function updateHistoryTable() {
-    const filterMonth = filterMonthInput.value; // Format: YYYY-MM
-    historyTableBody.innerHTML = "";
+// Render Quick Month Filter Pills
+function renderRecordedMonthsBar() {
+    const pillsContainer = document.getElementById("recorded-months-pills");
+    if (!pillsContainer) return;
+    pillsContainer.innerHTML = "";
 
-    if (!filterMonth) {
-        historyTableBody.innerHTML = `<tr><td colspan="5" class="text-center placeholder-text">Sila pilih bulan tapis.</td></tr>`;
+    const logKeys = Object.keys(state.logs || {});
+    if (logKeys.length === 0) {
+        pillsContainer.innerHTML = `<span style="font-size: 0.75rem; color: var(--text-secondary);">Tiada sebarang rekod tersimpan di dalam akaun ini lagi.</span>`;
         return;
     }
 
-    const filteredKeys = Object.keys(state.logs)
-        .filter(key => key.startsWith(filterMonth))
-        .sort((a, b) => new Date(a) - new Date(b));
+    // Group dates by YYYY-MM
+    const monthCounts = {};
+    logKeys.forEach(dateStr => {
+        const monthKey = dateStr.slice(0, 7); // "YYYY-MM"
+        monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
+    });
+
+    const sortedMonthKeys = Object.keys(monthCounts).sort((a, b) => b.localeCompare(a));
+    const activeValue = filterMonthInput ? filterMonthInput.value : "all";
+
+    // 1. "Semua Rekod" Pill
+    const allPill = document.createElement("button");
+    allPill.type = "button";
+    allPill.className = `btn btn-sm ${activeValue === 'all' ? 'btn-primary' : 'btn-secondary'}`;
+    allPill.style.fontSize = "0.75rem";
+    allPill.style.padding = "0.25rem 0.6rem";
+    allPill.style.borderRadius = "15px";
+    allPill.innerHTML = `<i class="fa-solid fa-folder"></i> Semua Rekod (${logKeys.length} Hari)`;
+    allPill.addEventListener("click", () => {
+        if (filterMonthInput) filterMonthInput.value = "all";
+        updateHistoryTable();
+        updateMonthlyPrintStatus();
+    });
+    pillsContainer.appendChild(allPill);
+
+    // 2. Individual Month Pills
+    sortedMonthKeys.forEach(mKey => {
+        const [y, m] = mKey.split("-");
+        const monthLabel = `${MONTH_NAMES[parseInt(m) - 1]} ${y}`;
+        const count = monthCounts[mKey];
+
+        const pill = document.createElement("button");
+        pill.type = "button";
+        pill.className = `btn btn-sm ${activeValue === mKey ? 'btn-primary' : 'btn-secondary'}`;
+        pill.style.fontSize = "0.75rem";
+        pill.style.padding = "0.25rem 0.6rem";
+        pill.style.borderRadius = "15px";
+        pill.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${monthLabel} (${count} Hari)`;
+        pill.addEventListener("click", () => {
+            if (filterMonthInput) filterMonthInput.value = mKey;
+            updateHistoryTable();
+            updateMonthlyPrintStatus();
+        });
+        pillsContainer.appendChild(pill);
+    });
+}
+
+// Auto select month with available logs if current month is empty
+function selectBestDefaultMonth() {
+    if (!filterMonthInput) return;
+    const today = new Date();
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    
+    const logKeys = Object.keys(state.logs || {});
+    if (logKeys.length === 0) {
+        filterMonthInput.value = currentMonthKey;
+        return;
+    }
+
+    // If current month has logs, keep it. Otherwise default to most recent recorded month!
+    const currentMonthLogs = logKeys.filter(k => k.startsWith(currentMonthKey));
+    if (currentMonthLogs.length > 0) {
+        filterMonthInput.value = currentMonthKey;
+    } else {
+        const sortedMonths = Array.from(new Set(logKeys.map(k => k.slice(0, 7)))).sort((a, b) => b.localeCompare(a));
+        filterMonthInput.value = sortedMonths[0] || "all";
+    }
+}
+
+// Populate and Update History Table
+function updateHistoryTable() {
+    renderRecordedMonthsBar();
+
+    let filterMonth = filterMonthInput ? filterMonthInput.value : "all";
+    historyTableBody.innerHTML = "";
+
+    const logKeys = Object.keys(state.logs || {});
+    if (logKeys.length === 0) {
+        historyTableBody.innerHTML = `<tr><td colspan="5" class="text-center placeholder-text">Tiada rekod BDR tersimpan di dalam akaun ini lagi.</td></tr>`;
+        return;
+    }
+
+    let filteredKeys = [];
+    if (!filterMonth || filterMonth === "all") {
+        filteredKeys = logKeys.sort((a, b) => new Date(b) - new Date(a));
+    } else {
+        filteredKeys = logKeys
+            .filter(key => key.startsWith(filterMonth))
+            .sort((a, b) => new Date(b) - new Date(a));
+    }
 
     if (filteredKeys.length === 0) {
-        historyTableBody.innerHTML = `<tr><td colspan="5" class="text-center placeholder-text">Tiada rekod BDR ditemui bagi bulan ${MONTH_NAMES[parseInt(filterMonth.split("-")[1]) - 1]} ${filterMonth.split("-")[0]}.</td></tr>`;
+        const parts = filterMonth.split("-");
+        const monthName = parts.length === 2 ? `${MONTH_NAMES[parseInt(parts[1]) - 1]} ${parts[0]}` : filterMonth;
+        
+        const existingMonths = Array.from(new Set(logKeys.map(k => k.slice(0, 7))))
+            .map(mKey => {
+                const [y, m] = mKey.split("-");
+                return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`;
+            }).join(", ");
+
+        historyTableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center" style="padding: 1.5rem;">
+                    <div style="color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        <i class="fa-solid fa-folder-open" style="font-size: 2rem; color: var(--primary-color);"></i>
+                    </div>
+                    <h4 style="margin-bottom: 0.25rem;">Tiada rekod bagi bulan ${monthName} lagi.</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                        Data anda pada bulan lain (${existingMonths}) selamat tersimpan. Klik butang bulan di atas atau pilih "Semua Rekod" untuk menyemak & mencetak.
+                    </p>
+                </td>
+            </tr>
+        `;
         return;
     }
 
@@ -927,11 +1037,10 @@ function updateHistoryTable() {
         const dayOfWeek = logDate.getDay();
         const dateFormatted = `${logDate.getDate()} ${MONTH_NAMES[logDate.getMonth()]} ${logDate.getFullYear()}`;
         
-        // Create summary string of activities
         const dailyLogs = state.logs[key];
         const categories = [];
         for (let hr in dailyLogs) {
-            if (!categories.includes(dailyLogs[hr].task)) {
+            if (dailyLogs[hr] && dailyLogs[hr].task && !categories.includes(dailyLogs[hr].task)) {
                 categories.push(dailyLogs[hr].task);
             }
         }
@@ -942,7 +1051,7 @@ function updateHistoryTable() {
             <td>${index + 1}</td>
             <td><strong>${dateFormatted}</strong></td>
             <td>${DAY_NAMES[dayOfWeek]}</td>
-            <td><span class="help-text">${categoriesStr}</span></td>
+            <td><span class="help-text">${categoriesStr || 'Tiada catatan'}</span></td>
             <td>
                 <button class="btn btn-secondary btn-icon" onclick="editLoggedDate('${key}')" title="Edit Log"><i class="fa-solid fa-pen-to-square"></i></button>
                 <button class="btn btn-secondary btn-icon" onclick="triggerDailyPrintForDate('${key}')" title="Cetak Hari Ini"><i class="fa-solid fa-print"></i></button>
@@ -1878,6 +1987,7 @@ async function fetchUserDataFromCloud(uid) {
                 loadActiveDateLog();
             }
             updateDashboardStats();
+            selectBestDefaultMonth();
             updateHistoryTable();
             showToast("☁️ Data akaun berjaya diselaras dari Awan!");
         } else {
